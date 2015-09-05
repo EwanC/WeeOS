@@ -4,6 +4,9 @@ BITS 16     ; 16-bit real mode
 mov bx, HELLO_MSG ; bx is parameter reg for function
 call print_string
 
+mov dx, 0xBEEF
+call print_hex
+
 jmp $ ; Hang
 
 %include "print.asm"  
