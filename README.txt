@@ -1,7 +1,3 @@
 Project to create own OS.
 
-build:
- nasm -f bin -o hello.bin hello.asm
-
-run: 
- qemu-system-x86_64 hello.bin
+Following guide: http://www.cs.bham.ac.uk/~exr/lectures/opsys/10_11/lectures/os-dev.pdf
