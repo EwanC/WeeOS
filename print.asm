@@ -43,5 +43,21 @@ print_hex:
   popa
   ret
 
+; prints a new line
+print_new_line:
+  pusha
+
+  mov ah, 0x3 ; get cursor position
+  mov bh, 0   ; page number 0
+  int 0x10
+
+  mov dl, 0   ; set column to 0
+  inc dh      ; move row down one
+  mov ah, 0x2 ; set cursor position
+  int 0x10
+
+  popa
+  ret
+
 ; global variable
 HEX_STR: db '0x0000',0

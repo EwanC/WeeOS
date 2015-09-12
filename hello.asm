@@ -1,14 +1,15 @@
 BITS 16     ; 16-bit real mode
 [org 0x7C00] ; tell assembler where this code expects to be loaded
 
-;mov bx, HELLO_MSG ; bx is parameter reg for function
-;call print_string
-
 mov [BOOT_DRIVE], dl ; BIOS stores our bootdrive in dl,
                      ; so best remember this for later
 
 mov bp, 0x8000 ; set the stack out of the way at 0x8000
 mov sp, bp
+
+mov bx, HELLO_MSG ; bx is parameter reg for function
+call print_string
+call print_new_line
 
 mov bx, 0x9000 ; load 5 sectors 0x0000(ES):0x9000(BX)
 mov dh, 5      ; from the boot disk
@@ -17,6 +18,8 @@ call disk_load
 
 mov dx, [0x9000] ; Print out the first loaded word which
 call print_hex   ; We expect to be 0xdada
+
+call print_new_line
 
 mov dx, [0x9000 + 512]  ; Also print first word from the second
 call print_hex          ; loaded sector, 0xface
@@ -28,7 +31,7 @@ jmp $ ; Hang
 
 ;Data
 HELLO_MSG:
-  db 'Welcome to WeeOS',0xa, 0
+  db 'Welcome to WeeOS', 0
 
 BOOT_DRIVE:
   db 0
