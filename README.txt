@@ -87,3 +87,21 @@ A normal FAT entry contains the successor cluster number, that is the number of 
 the value 0xffff in its FAT entry to indicate that there are no more clusters.
 
 In FAT 12 each entry is 12 bits in size
+
+The Root Directory
+
+The root directory contains an entry for each file whose name appears at the root of the file system. The difference between the root dir and subdirs
+is that space for the root dir is allocated statically when the device is formatted. There is thus an upper limit on the number of files that can appear in the root dir.
+
+The format of all directories is the same. Each entry is 32 bytes in size, so a single block can contain 16 of then.
+The following table shows a summary of a single directory entry
+
+Offset  Length  Description
+0x00    8 bytes     Filename
+0x08    3 bytes     Filename extension
+0x0b    1 byte  File attributes
+0x0c    10 bytes    Reserved
+0x16    2 bytes     Time created or last updated
+0x18    2 bytes     Date created or last updated
+0x1a    2 bytes     Starting cluster number for file
+0x1c    4 bytes     File size in bytes
