@@ -10,7 +10,7 @@ BITS 16     ; Assembler directive for 16-bit real mode
 [org 0x7C00] ; Load bootloader into 0x7C000.
 
 
-; First 3 bytes of boostrap program should be a jump to the 
+; First 3 bytes of boostrap program should be a jump to the
 ; begining of the boostrap program past the dist description table
 
 jmp short bootloader_start ; two byte instruction
@@ -27,7 +27,7 @@ RootDirEntries      dw 224           ; Number of entries in root dir
                                      ; (224 * 32 = 7168 = 14 sectors to read)
 LogicalSectors      dw 2880          ; Number of logical sectors on the entire disk.
 MediumByte          db 0F0h          ; Media descriptor byte
-SectorsPerFat       dw 9             ; Number of bloks occupied by one copy of the File Allocaton Table
+SectorsPerFat       dw 9             ; Number of blocks occupied by one copy of the File Allocaton Table
 SectorsPerTrack     dw 18            ; Sectors per track (36/cylinder)
 Sides               dw 2             ; Number of sides/heads
 HiddenSectors       dd 0             ; Historical, can be ignored
@@ -45,6 +45,24 @@ bootloader_start:
 
   mov bp, 0x8000 ; set the stack out of the way at 0x8000
   mov sp, bp
+
+
+  ; Load FAT Root directory from floppy
+  ; root sector # = (size of FAT) * (Number of FATS) + 1
+  ;               = (9 * 2) + 1
+  ;               = 19
+
+
+
+  ; Size of Root directory in sectors
+  ; size = (number of root entries) * 32 Bytes / (Sector size)
+  ;      = (224 * 32) / 512
+  ;      = 14
+
+  ; Cluster number of first block after root dir
+  ; # = Root start + root size
+  ;   = 19 + 14
+  ;   = 33
 
   mov bx, HELLO_MSG ; bx is parameter reg for function
   call print_string
@@ -64,6 +82,46 @@ bootloader_start:
   call print_hex          ; loaded sector, 0xface
 
   jmp $ ; Hang
+
+; Calculates head(dh), track(ch), device(dl), and sector(cl) registers
+; for disk read with int 13
+; ax is passed in as the logical sector to read(Logical Block Addressing)
+;
+; Note: Sector is based at 1 not 0
+;
+; - Temp = LBA / Sectors per track
+; - Sector = (LBA % Sectors per track) + 1
+; - Head = Temp % (number of heads)
+; - Cylinder = Temp / (number of heads)
+
+set_disk_regs:
+  push ax
+  push bx
+
+  mov bx, ax ; save logical sector
+
+  ; First calculate the sector
+  mov dx, 0
+  div word [SectorsPerTrack] ; unsigned divide dx:ax by SectorsPerTrack,
+                             ; storing quotient in AX and remainer in DX
+  add dl, 0x01  ; Physical sectors start at one
+  mov cl, dl ; sectors belong in cl
+  mov ax, bx
+
+  ; Calculate head
+  mov dx, 0
+  div word [SectorsPerTrack] ; AX is now Temp
+  mov dx, 0
+  div word [Sides]    ; Two heads, one on each side
+  mov dh, dl          ; set head
+  mov ch, al          ; set track
+
+  pop ax
+  pop bx
+
+  mov dl, byte [BOOT_DRIVE] ; set correct device
+
+  ret
 
   %include "print.asm"  ; functions for printing
   %include "disk.asm"   ; functions for loading from dis
