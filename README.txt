@@ -13,6 +13,14 @@ and using MikeOS as a reference
 
 
 
+QEMU tips
+ctr-alt-2 to enter montior mode
+use info regs to see registers, ctrl(page up/page down)
+memsave to dump memory, memsave 0 65536 dump.bin
+
+
+
+
 0x0     ------------------------------------------
         |Interrupt vector table
 0x400   ------------------------------------------
