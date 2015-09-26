@@ -15,7 +15,7 @@ and using MikeOS as a reference
 
 QEMU tips
 ctr-alt-2 to enter montior mode
-use info regs to see registers, ctrl(page up/page down)
+use info registers to see registers, ctrl(page up/page down)
 memsave to dump memory, memsave 0 65536 dump.bin
 
 
@@ -48,6 +48,29 @@ e.g
    mov ax, [0x20] ; ax is loaded from 0x4d0 (16 * 0x4d + 0x20)
 
 this allows us the reach 1MB(0xffff * 16 + 0xffff) 
+
+SEGMENTS
+cs - code segment
+   - holds instructions
+   - contains inital addr of code segmennt
+   - this address plus IP indicates the address of next instr
+   - CS:IP
+ds - data segment
+   - DS:BX DS:SI
+   - DS:DI
+
+es - extra segment 
+   - used for some string operations
+   - holds data read from disk using int 0x13, ES:BX
+   - ES:DI
+
+ss - stack segment
+   - this address plus SP is used for stack operations
+   - SS:SP SS:BP
+
+segments are 64k, and may be overlapping or non overlapping 
+
+A long jump is between segments
 
 CHS
 - Each circular track is divided into sectors, of 512 bytes, refered to bye a sector index

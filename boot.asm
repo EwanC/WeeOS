@@ -26,7 +26,7 @@ NumberOfFats        db 2             ; Number of copies of the File allocation T
 RootDirEntries      dw 224           ; Number of entries in root dir
                                      ; (224 * 32 = 7168 = 14 sectors to read)
 LogicalSectors      dw 2880          ; Number of logical sectors on the entire disk.
-MediumByte          db 0F0h          ; Media descriptor byte
+MediumByte          db 0x0F0         ; Media descriptor byte
 SectorsPerFat       dw 9             ; Number of blocks occupied by one copy of the File Allocaton Table
 SectorsPerTrack     dw 18            ; Sectors per track (36/cylinder)
 Sides               dw 2             ; Number of sides/heads
@@ -34,7 +34,7 @@ HiddenSectors       dd 0             ; Historical, can be ignored
 LargeSectors        dd 0             ; Number of LBA sectors
 DriveNo             dw 0             ; Drive No: 0
 Signature           db 41            ; Drive signature: 41 for floppy
-VolumeID            dd 00000000h     ; Volume ID: any number
+VolumeID            dd 0x00000000    ; Volume ID: any number
 VolumeLabel         db "WeeOS      " ; Volume Label: any 11 chars
 FileSystem          db "FAT12   "    ; File system type: don't change!
 
@@ -43,14 +43,12 @@ bootloader_start:
   mov [BOOT_DRIVE], dl ; BIOS stores our bootdrive in dl,
                        ; so best remember this for later
 
-
-  ;TODO  Setup MA stack and root buffer
-  mov bp, 0x8000 ; set the stack out of the way at 0x8000
+  ; set the stack out of the way at 0xA000
+  mov bp, 0xA000   
   mov sp, bp
+  
 
-
-
-  ; Calling interrupt 0x13 with ah=0x8 Reads the dirve parameters
+   ; Calling interrupt 0x13 with ah=0x8 Reads the dirve parameters
   mov ah, 0x8
   int 0x13
   jc disk_error  
@@ -60,8 +58,7 @@ bootloader_start:
   inc dx ; head numbers start at 0
   mov [Sides], dx
 
-  
-  ; Load FAT Root directory from floppy
+   ; Load FAT Root directory from floppy
   ; root sector # = (size of FAT) * (Number of FATS) + 1
   ;               = (9 * 2) + 1
   ;               = 19
@@ -69,17 +66,23 @@ bootloader_start:
   call set_disk_regs
   mov ah, 2   ; Read disk
   
-
   ; Size of Root directory in sectors
   ; size = (number of root entries) * 32 Bytes / (Sector size)
   ;      = (224 * 32) / 512
   ;      = 14
   mov al, 14
+  mov bx, buffer
+
+  push ax
+  mov ax, 0
+  mov es, ax
+  pop ax
 
   int 0x13 ; read root into ES:BX 
   jc disk_error  
 
-  
+  cmp al, 14 ;See if we actually read 14 sectors
+  jne disk_error
 
   ; Cluster number of first block after root dir
   ; # = Root start + root size
@@ -134,6 +137,7 @@ set_disk_regs:
 
 ; Assumes all int 13 regs have already been inited by 
 ; calling set_disk_regs
+; stores result in  ES:BX
 disk_read:
   mov ah, 0x02 ; BIOS read sector function
   int 0x13
@@ -149,7 +153,7 @@ disk_error:
 
 ;Data
 HELLO_MSG: db 'Welcome to WeeOS', 0
-DISK_ERROR_MSG: db "Disk read error!",0
+DISK_ERROR_MSG: db 'Disk read error',0
 BOOT_DRIVE: db 0
 
 times 510-($-$$) db 0 ; Pad remainder of boot sector with 0s

@@ -1,3 +1,4 @@
-boot.bin
+*.bin
 weeOS.flp
 *.pdf
+dump.*
