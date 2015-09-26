@@ -89,6 +89,44 @@ bootloader_start:
   ;   = 19 + 14
   ;   = 33
 
+search_dir:
+  mov dx, word[RootDirEntries]; dx is loop counter
+  mov ax, 0 ; iterator
+  mov di, buffer
+
+next_root_entry:
+  
+  mov si, KERN_FILENAME
+  mov cx, 11 ; filename length
+  
+  rep cmpsb ; cmpsb - compares strings at DS:SI with ES:DI, and sets flags accordingly
+            ;       - SI and DI are then adjusted accordingly
+            ; rep   - repeat instruction number of times specified by cx
+            ; ZF will be one if string is found here
+
+  je found_file ; We found the directory entry for the file
+
+  add ax, 32 ; Pointer to next 32 byte buffer entry
+  add di, ax
+
+  dec dx     ; Decrement loop counter 
+  cmp dx, 0
+  jg next_root_entry ; Loop if still entries left
+ 
+  
+  mov bx, FILE_NOT_FOUND_MSG ; bx is parameter reg for function
+  call print_string
+  call print_new_line
+  
+  jmp quit
+
+found_file: ; Load FAT into RAM
+
+  mov bx, FOUND_FILE_MSG ; bx is parameter reg for function
+  call print_string
+  call print_new_line
+
+quit:
   mov bx, HELLO_MSG ; bx is parameter reg for function
   call print_string
   call print_new_line
@@ -154,6 +192,9 @@ disk_error:
 ;Data
 HELLO_MSG: db 'Welcome to WeeOS', 0
 DISK_ERROR_MSG: db 'Disk read error',0
+FOUND_FILE_MSG: db 'Found File',0
+FILE_NOT_FOUND_MSG: db 'Could not find file',0
+KERN_FILENAME: db "KERNEL  BIN"
 BOOT_DRIVE: db 0
 
 times 510-($-$$) db 0 ; Pad remainder of boot sector with 0s
