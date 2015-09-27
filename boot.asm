@@ -117,9 +117,6 @@ next_root_entry:
 
 found_file: ; Load FAT into RAM
 
-  mov bx, FOUND_FILE_MSG ; bx is parameter reg for function
-  call print_string
-  call print_new_line
   ; Starting cluster of file is at offset 0x1a(26) in root dir entry
   ; We are at offset 11, so offset a further 15
 
@@ -143,11 +140,7 @@ found_file: ; Load FAT into RAM
   cmp al, [SectorsPerFat] ;See if we actually read 14 sectors
   jne disk_error
 
-  mov bx, READ_FAT_MSG ; bx is parameter reg for function
-  call print_string
-  call print_new_line
-
-load_first_file_sector:
+load_file_sector:
   ; Cluster number of first block after root dir
   ; # = Root start + root size
   ;   = 19 + 14
@@ -171,12 +164,50 @@ load_first_file_sector:
   mov ah, 2
   mov al, 1
 
-;  jc disk_error
-;
-;  cmp al, [SectorsPerFat] ;See if we actually read 14 sectors
-;  jne disk_error
+  jc disk_error
+
+  cmp al, 1 
+  jne disk_error
+
+calc_next_cluster:
+  ; Since we're using FAT12 cluster values are stored in 12 bits
+  mov ax, [CLUSTER]
+  mov dx, 0
+  mov bx, 3
+  mul bx
+  mov bx, 2
+  div bx              ; DX = [cluster] mod 2
+  mov si, buffer
+  add si, ax          ; AX = word in FAT for the 12 bit entry
+  mov ax, word [ds:si]
+
+  or dx, dx           ; If DX = 0 [cluster] is even; if DX = 1 then it's odd
+ 
+  jz even             ; If [cluster] is even, drop last 4 bits of word
+                      ; with next cluster; if odd, drop first 4 bits
+ 
+odd:
+  shr ax, 4           ; Shift out first 4 bits (they belong to another entry)
+  jmp short next_cluster_cont
+ 
+even:
+  and ax, 0x0FFF           ; Mask out final 4 bits
+
+next_cluster_cont:
+  mov word [CLUSTER], ax      ; Store cluster
+
+  cmp ax, 0x0FF8           ; FF8h = end of file marker in FAT12
+  jae end
+
+  add word [POINTER], 512     ; Increase buffer pointer 1 sector length
+  jmp load_file_sector
 
 
+end:                             ; We've got the file to load!
+  mov dl, byte [BOOT_DRIVE]      ; Provide kernel with boot device info
+ 
+  jmp 0x2000:0000        ; Jump to entry point of loaded kernel!
+ 
 quit:
   jmp $ ; Hang
 
@@ -229,9 +260,7 @@ disk_error:
 
 ;Data
 DISK_ERROR_MSG: db 'Disk read error',0
-FOUND_FILE_MSG: db 'Found Kernel File',0
 FILE_NOT_FOUND_MSG: db 'Could not find file',0
-READ_FAT_MSG: db 'Read file allocation table',0
 KERN_FILENAME: db "KERNEL  BIN"
 
 BOOT_DRIVE: db 0 ; boot drive number
