@@ -164,6 +164,8 @@ load_file_sector:
   mov ah, 2
   mov al, 1
 
+  int 0x13
+
   jc disk_error
 
   cmp al, 1 
@@ -196,7 +198,7 @@ even:
 next_cluster_cont:
   mov word [CLUSTER], ax      ; Store cluster
 
-  cmp ax, 0x0FF8           ; FF8h = end of file marker in FAT12
+  cmp ax, 0x0FF8           ; 0xFF8 = end of file marker in FAT12
   jae end
 
   add word [POINTER], 512     ; Increase buffer pointer 1 sector length
@@ -204,6 +206,8 @@ next_cluster_cont:
 
 
 end:                             ; We've got the file to load!
+
+
   mov dl, byte [BOOT_DRIVE]      ; Provide kernel with boot device info
  
   jmp 0x2000:0000        ; Jump to entry point of loaded kernel!
