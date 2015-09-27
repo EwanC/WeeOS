@@ -125,6 +125,32 @@ found_file: ; Load FAT into RAM
   mov bx, FOUND_FILE_MSG ; bx is parameter reg for function
   call print_string
   call print_new_line
+  ; Starting cluster of file is at offset 0x1a(26) in root dir entry
+  ; We are at offset 11, so offset a further 15
+
+  mov ax, word [di + 0xF]
+  mov word [CLUSTER], ax
+
+  mov ax, 1 ; Read file allocation table, from sector 1
+  call set_disk_regs
+
+  ; setup es:bx to read disk into buffer
+  mov di, buffer
+  mov bx, di
+
+  mov ah, 2 ; int0x13 read
+  mov al, [SectorsPerFat] ; Read all fat sectors
+
+  int 0x13
+
+  jc disk_error
+
+  cmp al, [SectorsPerFat] ;See if we actually read 14 sectors
+  jne disk_error
+
+  mov bx, READ_FAT_MSG ; bx is parameter reg for function
+  call print_string
+  call print_new_line
 
 quit:
   mov bx, HELLO_MSG ; bx is parameter reg for function
@@ -194,8 +220,11 @@ HELLO_MSG: db 'Welcome to WeeOS', 0
 DISK_ERROR_MSG: db 'Disk read error',0
 FOUND_FILE_MSG: db 'Found File',0
 FILE_NOT_FOUND_MSG: db 'Could not find file',0
+READ_FAT_MSG: db 'Read file allocation table',0
 KERN_FILENAME: db "KERNEL  BIN"
-BOOT_DRIVE: db 0
+
+BOOT_DRIVE: db 0 ; boot drive number
+CLUSTER: dw 0 ; Cluster of the file we want to load
 
 times 510-($-$$) db 0 ; Pad remainder of boot sector with 0s
 dw 0xAA55; The standard PC boot signature
