@@ -84,11 +84,6 @@ bootloader_start:
   cmp al, 14 ;See if we actually read 14 sectors
   jne disk_error
 
-  ; Cluster number of first block after root dir
-  ; # = Root start + root size
-  ;   = 19 + 14
-  ;   = 33
-
 search_dir:
   mov dx, word[RootDirEntries]; dx is loop counter
   mov ax, 0 ; iterator
@@ -152,11 +147,37 @@ found_file: ; Load FAT into RAM
   call print_string
   call print_new_line
 
-quit:
-  mov bx, HELLO_MSG ; bx is parameter reg for function
-  call print_string
-  call print_new_line
+load_first_file_sector:
+  ; Cluster number of first block after root dir
+  ; # = Root start + root size
+  ;   = 19 + 14
+  ;   = 33
+  ; FAT cluster 0 = media descriptor = 0F0h
+  ; FAT cluster 1 = filler cluster = 0FFh
+  ; Cluster  = (cluster number) + 31
 
+  ; Prepare to read clusta from disk
+  mov ax, word[CLUSTER] ; Cluster read # read from FAT
+  add ax, 31
+
+  call set_disk_regs
+
+  ; Load Kernel at 0x2000:XXXX
+  mov ax, 0x2000
+  mov es, ax
+  mov bx, word [POINTER] ; set buffer past what we've already read
+
+  ; Params for reading single sector from FAT
+  mov ah, 2
+  mov al, 1
+
+;  jc disk_error
+;
+;  cmp al, [SectorsPerFat] ;See if we actually read 14 sectors
+;  jne disk_error
+
+
+quit:
   jmp $ ; Hang
 
 ; Calculates head(dh), track(ch), device(dl), and sector(cl) registers
@@ -199,15 +220,6 @@ set_disk_regs:
 
   ret
 
-; Assumes all int 13 regs have already been inited by 
-; calling set_disk_regs
-; stores result in  ES:BX
-disk_read:
-  mov ah, 0x02 ; BIOS read sector function
-  int 0x13
-  jc disk_error ; disk error
-  ret
-
 disk_error:
   mov bx, DISK_ERROR_MSG
   call print_string
@@ -216,15 +228,15 @@ disk_error:
 %include "print.asm"  ; functions for printing
 
 ;Data
-HELLO_MSG: db 'Welcome to WeeOS', 0
 DISK_ERROR_MSG: db 'Disk read error',0
-FOUND_FILE_MSG: db 'Found File',0
+FOUND_FILE_MSG: db 'Found Kernel File',0
 FILE_NOT_FOUND_MSG: db 'Could not find file',0
 READ_FAT_MSG: db 'Read file allocation table',0
 KERN_FILENAME: db "KERNEL  BIN"
 
 BOOT_DRIVE: db 0 ; boot drive number
 CLUSTER: dw 0 ; Cluster of the file we want to load
+POINTER: dw 0 ; Pointer into buffer for loading kernel
 
 times 510-($-$$) db 0 ; Pad remainder of boot sector with 0s
 dw 0xAA55; The standard PC boot signature
