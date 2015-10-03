@@ -1,24 +1,25 @@
+<pre> 
   _    _            _____ _____
  | |  | |          |  _  /  ___|
  | |  | | ___  ___ | | | \ `--.
  | |/\| |/ _ \/ _ \| | | |`--. \
  \  /\  /  __/  __/\ \_/ /\__/ /
   \/  \/ \___|\___| \___/\____/    by Ewan Crawford, ewan.cr@gmail.com
+</pre>
 
-
-## Project to create my own 16-bit OS.
+# Project to create my own 16-bit OS.
 
 ## Based on MikeOS -  http://mikeos.sourceforge.net/
 
 
 
 ## QEMU tips
-* ctr-alt-2 to enter montior mode
+* `ctr-alt-2` to enter montior mode
 * use `info registers` to see registers, ctrl(page up/page down)
 * `memsave` to dump memory, memsave 0 65536 dump.bin
 
 ## Memory layout
-
+<pre>
 0x0     ------------------------------------------
         |Interrupt vector table
 0x400   ------------------------------------------
@@ -36,7 +37,7 @@
 0xC0000 ------------------------------------------
         | BIOS
 0x100000------------------------------------------
-
+</pre>
 ## X86 notes
 With 16 bit register the highest address we can reference is 0xffff, 64K.
 To get around this problem we can use cs, ds, ss, es segment registers.
