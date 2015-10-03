@@ -50,13 +50,13 @@ bootloader_start:
                        ; so best remember this for later
 
   ; set the stack out of the way at 0xA000
-  mov bp, 0xA000   
+  mov bp, 0xA000
   mov sp, bp
 
   ; Calling interrupt 0x13 with ah=0x8 reading the dirve parameters
   mov ah, 0x8
   int 0x13
-  jc disk_error  
+  jc disk_error
   and cx, 0x3F ; Max number of sectors, 63
   mov [SectorsPerTrack], cx
   movzx dx, dh ; dh stores max head number
@@ -70,7 +70,7 @@ bootloader_start:
   mov ax, 19
   call set_disk_regs
   mov ah, 2   ; Read disk
-  
+
   ; Size of Root directory in sectors
   ; size = (number of root entries) * 32 Bytes / (Sector size)
   ;      = (224 * 32) / 512
@@ -84,8 +84,8 @@ bootloader_start:
   mov es, ax   ; TODO find a cleaner way of setting es to 0
   pop ax
 
-  int 0x13 ; read root into ES:BX 
-  jc disk_error  
+  int 0x13 ; read root into ES:BX
+  jc disk_error
 
   cmp al, 14 ; See if we actually read 14 sectors
   jne disk_error
@@ -97,10 +97,10 @@ search_dir:
   mov di, buffer
 
 next_root_entry:
-  
+
   mov si, KERN_FILENAME
   mov cx, 11 ; filename length
-  
+
   rep cmpsb ; cmpsb - compares strings at DS:SI with ES:DI, and sets flags accordingly
             ;       - SI and DI are then adjusted
             ; rep   - repeat instruction number of times specified by cx
@@ -111,14 +111,14 @@ next_root_entry:
   add ax, 32 ; Pointer to next 32 byte buffer entry
   add di, ax
 
-  dec dx     ; Decrement loop counter 
+  dec dx     ; Decrement loop counter
   cmp dx, 0
   jg next_root_entry ; Loop if still entries left
- 
+
   mov bx, FILE_NOT_FOUND_MSG ; bx is parameter reg for function
   call print_string
   call print_new_line
-  
+
   jmp quit
 
 found_file: ; Load FAT into RAM
@@ -173,7 +173,7 @@ load_file_sector:
 
   jc disk_error
 
-  cmp al, 1 
+  cmp al, 1
   jne disk_error
 
 calc_next_cluster:
@@ -189,14 +189,14 @@ calc_next_cluster:
   mov ax, word [ds:si]
 
   or dx, dx           ; If DX = 0 [cluster] is even; if DX = 1 then it's odd
- 
+
   jz even             ; If [cluster] is even, drop last 4 bits of word
                       ; with next cluster; if odd, drop first 4 bits
- 
+
 odd:
   shr ax, 4           ; Shift out first 4 bits (they belong to another entry)
   jmp short next_cluster_cont
- 
+
 even:
   and ax, 0x0FFF           ; Mask out final 4 bits
 
@@ -211,13 +211,13 @@ next_cluster_cont:
 
 end:                             ; We've got the file to load!
   mov dl, byte [BOOT_DRIVE]      ; Provide kernel with boot device info
- 
+
   mov bx, BOOT_DONE_MSG
   call print_string
   call print_new_line
 
   jmp 0x2000:0000        ; Jump to entry point of loaded kernel!
- 
+
 quit:
   jmp $ ; Hang
 
@@ -281,5 +281,5 @@ POINTER: dw 0 ; Pointer into buffer for loading kernel
 times 510-($-$$) db 0 ; Pad remainder of boot sector with 0s
 dw 0xAA55; The standard PC boot signature
 
-buffer: ; Disk buffer label for loading root directory 
+buffer: ; Disk buffer label for loading root directory
         ; Should be 0x7E00
