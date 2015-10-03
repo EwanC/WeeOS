@@ -11,7 +11,7 @@
 
 ### Based on MikeOS -  http://mikeos.sourceforge.net/
 
-### Compile and Run with `sudo ./go.sh` and a linux system,
+### Compile and Run with `sudo ./go.sh` on a linux system.
 
 ## QEMU tips
 * `ctr-alt-2` to enter montior mode
