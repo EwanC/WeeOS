@@ -1,20 +1,25 @@
 ;--------------------------------------------------------------------------------------------------
-; Bootloader for 3.5 Inch FAT12 Floppy
+; WeeOS Bootloader for 3.5 Inch FAT12 Floppy
 ;
-; This 512 Byte bootloader is loaded into 0x7C00 in RAM
+; This 512 Byte bootloader is loaded into 0x7C00 in RAM.
+; Looks in FAT root table for the WeeOS kernel binary KERNEL.BIN
+; Loads it from disk then jmps to load location to execute it.
 ;
+;
+; Ewan Crawford <ewan.cr@gmail.com> 01/10/15
+;
+; Based on the MikeOS bootloader.
 ;--------------------------------------------------------------------------------------------------
 
 
-BITS 16     ; Assembler directive for 16-bit real mode
-[org 0x7C00] ; Load bootloader into 0x7C000.
-
+BITS 16                        ; Assembler directive for 16-bit real mode
+[org 0x7C00]                   ; Load bootloader into 0x7C00.
 
 ; First 3 bytes of boostrap program should be a jump to the
-; begining of the boostrap program past the dist description table
+; begining of the boostrap program past the disk description table
 
 jmp short bootloader_start ; two byte instruction
-nop ; padding
+nop ; 1 byte padding
 
 ; Disk Description Table
 OEMLabel            db "EWANBOOT"    ; Optional manufacturers description, 8 bytes
@@ -23,9 +28,10 @@ SectorsPerCluster   db 1             ; Sectors per cluster, i.e blocks per alloc
 ReservedForBoot     dw 1             ; Reserved sectors for boot record. Number of blocks on the disk
                                      ; that are not actually part of the file system.
 NumberOfFats        db 2             ; Number of copies of the File allocation Table.
-RootDirEntries      dw 224           ; Number of entries in root dir
+RootDirEntries      dw 224           ; Max number of entries in root dir
                                      ; (224 * 32 = 7168 = 14 sectors to read)
 LogicalSectors      dw 2880          ; Number of logical sectors on the entire disk.
+                                     ; 80 tracks, 36 sectors per track, 2 geads
 MediumByte          db 0x0F0         ; Media descriptor byte
 SectorsPerFat       dw 9             ; Number of blocks occupied by one copy of the File Allocaton Table
 SectorsPerTrack     dw 18            ; Sectors per track (36/cylinder)
@@ -46,19 +52,18 @@ bootloader_start:
   ; set the stack out of the way at 0xA000
   mov bp, 0xA000   
   mov sp, bp
-  
 
-   ; Calling interrupt 0x13 with ah=0x8 Reads the dirve parameters
+  ; Calling interrupt 0x13 with ah=0x8 reading the dirve parameters
   mov ah, 0x8
   int 0x13
   jc disk_error  
-  and cx, 0x3F ; Max number of sectors
+  and cx, 0x3F ; Max number of sectors, 63
   mov [SectorsPerTrack], cx
   movzx dx, dh ; dh stores max head number
   inc dx ; head numbers start at 0
   mov [Sides], dx
 
-   ; Load FAT Root directory from floppy
+  ; Load FAT Root directory from floppy
   ; root sector # = (size of FAT) * (Number of FATS) + 1
   ;               = (9 * 2) + 1
   ;               = 19
@@ -71,21 +76,23 @@ bootloader_start:
   ;      = (224 * 32) / 512
   ;      = 14
   mov al, 14
-  mov bx, buffer
+  mov bx, buffer ; point read destination to our buffer
+                 ; see end of file
 
   push ax
   mov ax, 0
-  mov es, ax
+  mov es, ax   ; TODO find a cleaner way of setting es to 0
   pop ax
 
   int 0x13 ; read root into ES:BX 
   jc disk_error  
 
-  cmp al, 14 ;See if we actually read 14 sectors
+  cmp al, 14 ; See if we actually read 14 sectors
   jne disk_error
 
+; Get ready to search root directory for our kernel binary
 search_dir:
-  mov dx, word[RootDirEntries]; dx is loop counter
+  mov dx, word[RootDirEntries] ; dx is loop counter
   mov ax, 0 ; iterator
   mov di, buffer
 
@@ -95,7 +102,7 @@ next_root_entry:
   mov cx, 11 ; filename length
   
   rep cmpsb ; cmpsb - compares strings at DS:SI with ES:DI, and sets flags accordingly
-            ;       - SI and DI are then adjusted accordingly
+            ;       - SI and DI are then adjusted
             ; rep   - repeat instruction number of times specified by cx
             ; ZF will be one if string is found here
 
@@ -108,7 +115,6 @@ next_root_entry:
   cmp dx, 0
   jg next_root_entry ; Loop if still entries left
  
-  
   mov bx, FILE_NOT_FOUND_MSG ; bx is parameter reg for function
   call print_string
   call print_new_line
@@ -119,7 +125,6 @@ found_file: ; Load FAT into RAM
 
   ; Starting cluster of file is at offset 0x1a(26) in root dir entry
   ; We are at offset 11, so offset a further 15
-
   mov ax, word [di + 0xF]
   mov word [CLUSTER], ax
 
@@ -130,14 +135,14 @@ found_file: ; Load FAT into RAM
   mov di, buffer
   mov bx, di
 
-  mov ah, 2 ; int0x13 read
+  mov ah, 2 ; int 0x13 read function
   mov al, [SectorsPerFat] ; Read all fat sectors
 
   int 0x13
 
   jc disk_error
 
-  cmp al, [SectorsPerFat] ;See if we actually read 14 sectors
+  cmp al, [SectorsPerFat] ; See if we actually read 14 sectors
   jne disk_error
 
 load_file_sector:
@@ -204,12 +209,13 @@ next_cluster_cont:
   add word [POINTER], 512     ; Increase buffer pointer 1 sector length
   jmp load_file_sector
 
-
 end:                             ; We've got the file to load!
-
-
   mov dl, byte [BOOT_DRIVE]      ; Provide kernel with boot device info
  
+  mov bx, BOOT_DONE_MSG
+  call print_string
+  call print_new_line
+
   jmp 0x2000:0000        ; Jump to entry point of loaded kernel!
  
 quit:
@@ -265,6 +271,7 @@ disk_error:
 ;Data
 DISK_ERROR_MSG: db 'Disk read error',0
 FILE_NOT_FOUND_MSG: db 'Could not find file',0
+BOOT_DONE_MSG: db 'BOOT COMPLETE',0
 KERN_FILENAME: db "KERNEL  BIN"
 
 BOOT_DRIVE: db 0 ; boot drive number
