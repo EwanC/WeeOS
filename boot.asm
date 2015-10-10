@@ -266,7 +266,39 @@ disk_error:
   call print_string
   jmp $               ; HANG
 
-%include "print.asm"  ; functions for printing
+; prints string value from BX
+print_string:
+  push ax
+  push bx
+  mov ah, 0x0e ; BIOS tele-type interrupt
+.repeat:
+  mov al, [bx]
+  inc bx
+  cmp al, 0
+  je .done
+  int 0x10
+  jmp .repeat
+
+.done: ;end of string
+  pop bx
+  pop ax
+  ret
+
+; prints a new line
+print_new_line:
+  pusha
+
+  mov ah, 0x3 ; get cursor position
+  mov bh, 0   ; page number 0
+  int 0x10
+
+  mov dl, 0   ; set column to 0
+  inc dh      ; move row down one
+  mov ah, 0x2 ; set cursor position
+  int 0x10
+
+  popa
+  ret
 
 ;Data
 DISK_ERROR_MSG: db 'Disk read error',0
