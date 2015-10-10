@@ -1,3 +1,54 @@
+read_input_string:
+  pusha
+ 
+  mov di, ax          ; DI is where we'll store input (buffer)
+  mov cx, 0           ; index in buffer
+.more:                  ; Now onto string getting
+  call wait_for_key
+
+  cmp al, 13          ; If Enter key pressed, finish
+  je .done
+ 
+  cmp al, ' '         ; ascii prinatable char
+  jb .more    
+
+  cmp al, '~'
+  ja .more
+
+
+  ; echo char
+  mov ah, 0x0e
+  int 0x10
+  stosb
+  inc cx
+  cmp cx, 254
+  jae near .done
+
+  jmp near .more
+
+.done:
+  mov ax, 0 ; null terminating byte
+  stosb
+
+  popa
+  ret
+
+; Waits for keypress and returns key in ax
+wait_for_key:
+  pusha 
+
+  mov ax, 0 
+  mov ah, 10h         ; BIOS call to wait for key 
+  int 16h 
+
+  mov [.tmp_buf], ax      ; Store resulting keypress 
+
+  popa                ; But restore all other regs 
+  mov ax, [.tmp_buf]
+  ret 
+
+  .tmp_buf    dw 0
+
 ; prints string value from BX
 print_string:
   push ax

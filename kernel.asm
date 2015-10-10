@@ -26,6 +26,13 @@ os_main:
   call print_string
   call print_new_line
 
+.loop
+  call print_new_line
+  call os_command_line
+
+  jmp .loop
+
+exit:
   jmp $ ; Hang
 
 ;;;;;;;;;;;;;;;;;;;;;;
@@ -37,3 +44,4 @@ OS_SETUP_MSG: db 'Loading WeeOS',0
 ; Includes
 ;;;;;;;;;;;;;;;;;;;;;
 %include "print.asm"
+%include "cli.asm"
