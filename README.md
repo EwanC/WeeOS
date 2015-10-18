@@ -152,6 +152,7 @@ The following table shows a summary of a single directory entry
   * Print 'WeeOS' at top of screen
   * Scrolling command line
   * Colours
+  * Add shutdown command
 2. File system
   * Read file
   * Add command to list files
