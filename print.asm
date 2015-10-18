@@ -110,5 +110,49 @@ print_new_line:
   popa
   ret
 
+print_heading:
+  mov bx, HEAD_1_STR
+  call print_string
+  call print_new_line
+
+  mov bx, HEAD_2_STR
+  call print_string
+  call print_new_line
+
+  mov bx, HEAD_3_STR
+  call print_string
+  call print_new_line
+
+  mov bx, HEAD_4_STR
+  call print_string
+  call print_new_line
+
+  mov bx, HEAD_5_STR
+  call print_string
+  call print_new_line
+
+  mov bx, HEAD_6_STR
+  call print_string
+  call print_new_line
+
+  ret
+
+print_prompt:
+  push bx
+
+  mov bx, PROMPT
+  call print_string
+
+  pop bx
+  ret
+
 ; global variable
 HEX_STR: db '0x0000',0
+PROMPT: db '$> ',0
+
+HEAD_1_STR: db '  _    _            _____ _____ ',0
+HEAD_2_STR: db ' | |  | |          |  _  /  ___|',0
+HEAD_3_STR: db ' | |  | | ___  ___ | | | \ `--. ',0
+HEAD_4_STR: db ' | |/\| |/ _ \/ _ \| | | |`--. \',0
+HEAD_5_STR: db ' \  /\  /  __/  __/\ \_/ /\__/ /',0
+HEAD_6_STR: db '  \/  \/ \___|\___| \___/\____/ ',0

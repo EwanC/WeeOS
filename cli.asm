@@ -11,8 +11,7 @@ os_command_line:
   mov cx, 256
   rep stosb ; repeate store byte to string
 
-  mov bx, PROMPT
-  call print_string
+  call print_prompt
 
   mov ax, buffer ; get command from user
   call read_input_string
@@ -26,5 +25,3 @@ os_command_line:
 
 ;input buffer
 buffer times 256 db 0
-; data
-PROMPT: db '$> ',0

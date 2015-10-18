@@ -22,9 +22,7 @@ os_main:
   mov fs, ax
   mov gs, ax
 
-  mov bx, OS_SETUP_MSG ; bx is parameter reg for function
-  call print_string
-  call print_new_line
+  call print_heading
 
 .loop
   call print_new_line
