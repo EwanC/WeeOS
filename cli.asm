@@ -17,7 +17,7 @@ os_command_line:
   call read_input_string
   call print_new_line
 
-  mov bx, buffer ; echo 
+  mov si, buffer ; echo 
   call print_string
   call print_new_line
 

@@ -1,3 +1,13 @@
+set_video_mode:
+  push ax
+  
+  mov ah, 0x00
+  mov al, 0x10 ; set video mode
+  int 0x10
+
+  pop ax
+  ret
+
 read_input_string:
   pusha
  
@@ -18,6 +28,8 @@ read_input_string:
 
   ; echo char
   mov ah, 0x0e
+  mov bl, 0000b
+  mov bx, 1111b ; set text to white
   int 0x10
   stosb
   inc cx
@@ -49,22 +61,23 @@ wait_for_key:
 
   .tmp_buf    dw 0
 
-; prints string value from BX
+; prints string value from SI
 print_string:
-  push ax
-  push bx
+  pusha
   mov ah, 0x0e ; BIOS tele-type interrupt
+  mov bh, 0x00 ; Page number
+  mov bl, [COLOUR]
+
 .repeat:
-  mov al, [bx]
-  inc bx
+  mov al, [si]
+  inc si
   cmp al, 0
   je .done
   int 0x10
   jmp .repeat
 
 .done: ;end of string
-  pop bx
-  pop ax
+  popa
   ret
 
 ; prints the value of DX as hex.
@@ -88,7 +101,7 @@ print_hex:
   shl dx, 4 ; check for another byte
   or dx, dx
   jnz .mask
-  mov bx, HEX_STR
+  mov si, HEX_STR
   call print_string
 
   popa
@@ -111,48 +124,97 @@ print_new_line:
   ret
 
 print_heading:
-  mov bx, HEAD_1_STR
+
+  call set_text_cyan
+
+  mov si, HEAD_1_STR
   call print_string
   call print_new_line
 
-  mov bx, HEAD_2_STR
+  mov si, HEAD_2_STR
   call print_string
   call print_new_line
 
-  mov bx, HEAD_3_STR
+  mov si, HEAD_3_STR
   call print_string
   call print_new_line
 
-  mov bx, HEAD_4_STR
+  mov si, HEAD_4_STR
   call print_string
   call print_new_line
 
-  mov bx, HEAD_5_STR
+  mov si, HEAD_5_STR
   call print_string
   call print_new_line
 
-  mov bx, HEAD_6_STR
+  mov si, HEAD_6_STR
   call print_string
   call print_new_line
+
+
+  call set_text_white
 
   ret
 
 print_prompt:
   push bx
 
-  mov bx, PROMPT
+  call set_text_green
+
+  mov si, PROMPT
   call print_string
+
+  call set_text_white
 
   pop bx
   ret
 
+set_text_cyan:
+ push ax
+
+ mov ah, CYAN
+ mov [COLOUR], ah
+
+ pop ax
+ ret
+
+
+set_text_green:
+ push ax
+
+ mov ah, GREEN
+ mov [COLOUR], ah
+
+ pop ax
+ ret
+
+set_text_white:
+ push ax
+
+ mov ah, WHITE
+ mov [COLOUR], ah
+
+ pop ax
+ ret
+
+
 ; global variable
 HEX_STR: db '0x0000',0
 PROMPT: db '$> ',0
+COLOUR: db 1111b
 
+; TITLE HEADER
 HEAD_1_STR: db '  _    _            _____ _____ ',0
 HEAD_2_STR: db ' | |  | |          |  _  /  ___|',0
 HEAD_3_STR: db ' | |  | | ___  ___ | | | \ `--. ',0
 HEAD_4_STR: db ' | |/\| |/ _ \/ _ \| | | |`--. \',0
 HEAD_5_STR: db ' \  /\  /  __/  __/\ \_/ /\__/ /',0
 HEAD_6_STR: db '  \/  \/ \___|\___| \___/\____/ ',0
+
+; COLOURS
+BLACK equ 0000b
+BLUE equ 0001b
+GREEN equ 0010b
+CYAN equ 0011b
+RED equ 0100b
+WHITE equ 1111b

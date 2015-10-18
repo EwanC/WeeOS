@@ -22,6 +22,7 @@ os_main:
   mov fs, ax
   mov gs, ax
 
+  call set_video_mode
   call print_heading
 
 .loop
