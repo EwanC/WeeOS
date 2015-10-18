@@ -146,3 +146,23 @@ The following table shows a summary of a single directory entry
 |0x18  |  2 bytes   |  Date created or last updated|
 |0x1a |   2 bytes   |  Starting cluster number for file|
 |0x1c|    4 bytes   |  File size in bytes|
+
+### Roadmap
+1. CLI
+  * Print 'WeeOS' at top of screen
+  * Scrolling command line
+  * Colours
+2. File system
+  * Read file
+  * Add command to list files
+  * Add command to display file contents
+  * Add command to change directory
+3. Loader
+  * Define binary file structure
+  * Loader to run programs
+  * Add command to execute programs.
+4. Hex editor
+  * Write files
+  * display hex
+5. Compiler
+  * C subset
