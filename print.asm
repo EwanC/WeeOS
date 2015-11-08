@@ -107,6 +107,24 @@ print_hex:
   popa
   ret
 
+; Removes all the text on the screen
+clear_screen:
+  pusha
+
+  mov dx, START_LINE
+  call set_cursor_position ; move cursor the start of screen
+
+  mov ah, 6 ; function code for scrolling up
+  mov al, 0 ; clear code
+  mov cx, 0 ; top left
+  mov dh, LAST_LINE; bottom right
+  mov dl, NUM_COLS
+
+  int 0x10
+
+  popa
+  ret
+
 ; Sets cursor to coordinate with row in DH and column in DL
 set_cursor_position:
   push bx
@@ -138,19 +156,40 @@ get_cursor_position:
 
 ; prints a new line
 print_new_line:
-  push dx
 
-  call get_cursor_position
+ push ax
+ push dx
 
-  mov dl, 0   ; set column to 0
-  inc dh      ; move row down one
+ mov ah, 0x0E ;print func code
 
-  call set_cursor_position
+ mov al, 13 ; CR ascii code
+ int 0x10
 
-  pop dx
-  ret
+ mov al, 10 ; LF ascii code
+ int 0x10
+
+ call get_cursor_position
+ cmp dh, LAST_LINE
+ jl .end
+
+ ; keep heading at top of screen
+ call print_heading
+
+ ; reset cursor
+ mov dh, LAST_LINE
+ mov dl, 0
+
+ call set_cursor_position
+
+.end:
+ pop dx
+ pop ax
+ ret
 
 print_heading:
+
+  mov dx, 0
+  call set_cursor_position
 
   call set_text_cyan
 
@@ -246,5 +285,8 @@ CYAN equ 0011b
 RED equ 0100b
 WHITE equ 1111b
 
-; FIRST LINE AFTER TITLE
-START_LINE equ 6
+; CURSOR constants
+START_LINE equ 6 ; First line after header
+LAST_LINE equ 24 ; Last line on qemu screen
+NUM_COLS equ 79  ; Number of screen columns
+NUM_LINES equ (LAST_LINE - START_LINE)
