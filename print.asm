@@ -215,8 +215,6 @@ print_heading:
 
   mov si, HEAD_6_STR
   call print_string
-  call print_new_line
-
 
   call set_text_white
 
