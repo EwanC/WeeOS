@@ -107,6 +107,20 @@ print_hex:
   popa
   ret
 
+; Sets cursor to coordinate with row in DH and column in DL
+set_cursor_position:
+  push bx
+  push ax
+
+  mov bh, 0 ; page number
+  mov ah, 2 ; set cursor pos interrupt code
+  int 0x10
+
+  pop ax
+  pop bx
+
+  ret
+
 
 ; Returns cursor row in DH and column in DL
 get_cursor_position:
@@ -124,17 +138,16 @@ get_cursor_position:
 
 ; prints a new line
 print_new_line:
-  pusha
+  push dx
 
   call get_cursor_position
 
-  mov bh, 0   ; page number 0
   mov dl, 0   ; set column to 0
   inc dh      ; move row down one
-  mov ah, 0x2 ; set cursor position
-  int 0x10
 
-  popa
+  call set_cursor_position
+
+  pop dx
   ret
 
 print_heading:
