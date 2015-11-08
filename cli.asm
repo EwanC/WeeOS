@@ -19,7 +19,6 @@ os_command_line:
 
   mov si, buffer ; echo 
   call print_string
-  call print_new_line
 
   ret
 
