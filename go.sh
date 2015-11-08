@@ -21,7 +21,7 @@ nasm -f bin -o boot.bin boot.asm || exit
 echo "Assembled Bootloader"
 
 # Assemble kernel
-nasm -f bin -o kernel.bin kernel.asm || exit
+nasm -f bin -Werror -Wall -o kernel.bin kernel.asm || exit
 
 echo "Assembled Kernel"
 

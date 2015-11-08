@@ -25,7 +25,7 @@ os_main:
   call set_video_mode
   call print_heading
 
-.loop
+.loop:
   call print_new_line
   call os_command_line
 
