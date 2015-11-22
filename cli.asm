@@ -48,7 +48,7 @@ do_list_files:
    mov ax, file_name_buffer
    call disk_file_list
 
-   mov si, disk_file_list
+   mov si, file_name_buffer
    call print_string
    ret
 
