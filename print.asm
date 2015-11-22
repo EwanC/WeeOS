@@ -18,6 +18,9 @@ read_input_string:
 
   cmp al, 13          ; If Enter key pressed, finish
   je .done
+
+  cmp al, 8          ; backspace
+  je .backspace
  
   cmp al, ' '         ; ascii prinatable char
   jb .more    
@@ -25,7 +28,31 @@ read_input_string:
   cmp al, '~'
   ja .more
 
+  jmp .nobackspace
 
+.backspace:
+ cmp cx, 0 ; backspace at start of string
+ je .more
+
+ ; TODO Backspace at start of line
+
+ ; Write whitespace and move cursor back
+ pusha ax
+ mov ah, 0xe
+ mov al, 8 ; move cursor back
+ int 0x10
+ mov al, 32 ; whitespace char
+ int 0x10
+ mov al, 8  ; move cursor back
+ int 0x10
+ pop ax
+
+ dec di
+ dec cx
+
+ jmp .more
+
+.nobackspace:
   ; echo char
   mov ah, 0x0e
   mov bl, 0000b
