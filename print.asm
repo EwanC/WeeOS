@@ -1,6 +1,6 @@
 set_video_mode:
   push ax
-  
+
   mov ah, 0x00
   mov al, 0x10 ; set video mode
   int 0x10
@@ -10,7 +10,7 @@ set_video_mode:
 
 read_input_string:
   pusha
- 
+
   mov di, ax          ; DI is where we'll store input (buffer)
   mov cx, 0           ; index in buffer
 .more:                  ; Now onto string getting
@@ -21,9 +21,9 @@ read_input_string:
 
   cmp al, 8          ; backspace
   je .backspace
- 
+
   cmp al, ' '         ; ascii prinatable char
-  jb .more    
+  jb .more
 
   cmp al, '~'
   ja .more
@@ -74,17 +74,17 @@ read_input_string:
 
 ; Waits for keypress and returns key in ax
 wait_for_key:
-  pusha 
+  pusha
 
-  mov ax, 0 
-  mov ah, 10h         ; BIOS call to wait for key 
-  int 16h 
+  mov ax, 0
+  mov ah, 10h         ; BIOS call to wait for key
+  int 16h
 
-  mov [.tmp_buf], ax      ; Store resulting keypress 
+  mov [.tmp_buf], ax      ; Store resulting keypress
 
-  popa                ; But restore all other regs 
+  popa                ; But restore all other regs
   mov ax, [.tmp_buf]
-  ret 
+  ret
 
   .tmp_buf    dw 0
 

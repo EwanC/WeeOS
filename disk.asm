@@ -12,7 +12,7 @@ disk_load:
   int 0x13        ; BIOS interrupt
 
   jc disk_error   ; Jump if error (i.e carry flag is set)
-  
+
   pop dx
   cmp dh, al      ; if AL (sectors read) != DH (sectors expected)
   jne disk_error  ; diplay error msh
