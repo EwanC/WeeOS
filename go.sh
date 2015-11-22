@@ -15,6 +15,8 @@ fi
 # Make 1.44 MB FAT 12 floppy image
 mkdosfs -C weeOS.flp -F 12 1440 || exit
 
+cd source
+
 # Assemble bootloader
 nasm -f bin -o boot.bin boot.asm || exit
 
@@ -24,9 +26,10 @@ echo "Assembled Bootloader"
 nasm -f bin -Werror -Wall -o kernel.bin kernel.asm || exit
 
 echo "Assembled Kernel"
+cd ..
 
 # Copy bootloader to floppy image
-dd status=noxfer conv=notrunc if=boot.bin of=weeOS.flp || exit
+dd status=noxfer conv=notrunc if=source/boot.bin of=weeOS.flp || exit
 
 # A loop device is a fake device, actually just a file, that acts as a block based device.
 echo "Copying kernel to floppy" 
@@ -34,7 +37,7 @@ echo "Copying kernel to floppy"
 mkdir tmp_floppy_files || exit
 
 mount -o loop -t msdos -o "fat=12" weeOS.flp tmp_floppy_files || exit
-cp kernel.bin tmp_floppy_files/ || exit
+cp source/kernel.bin tmp_floppy_files/ || exit
 
 sleep 0.2 # Without sleep device will still be busy
 
