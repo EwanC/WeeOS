@@ -17,10 +17,31 @@ os_command_line:
   call read_input_string
   call print_new_line
 
-  mov si, buffer ; echo 
-  call print_string
+  mov si, buffer
 
+  mov di, shutdown_string
+  call compare_string
+
+  jc do_shutdown
+
+  call print_string ; echo
   ret
+
+; Shutsdown qemu emulator
+do_shutdown:
+    ; Connect to APM API
+    mov ax, 0x5301 ; Connect to Advanced Power Management real mode interface
+    xor bx, bx
+    int 0x15 ; CF set on error but try shutdown anyway
+
+    mov ax, 0x5307 ; Set power state
+    mov bx, 1 ; Device id
+    mov cx, 3 ; cx - system state id: 0 ready, 1 standbye, 2 suspend, 3 off
+    int 0x15
+    ret
 
 ;input buffer
 buffer times 256 db 0
+
+;COMMANDS
+shutdown_string  db 'shutdown', 0

@@ -80,6 +80,35 @@ print_string:
   popa
   ret
 
+; Compares strings in SI and DI to see if they match
+; Sets carry flag if they are the same, clears it otherwise
+compare_string:
+  pusha
+
+.loop:
+  mov al, [si]
+  mov bl, [di]
+
+  cmp al, bl    ; compare current chars
+  jne .not_same
+
+  cmp al, 0  ; check end of string
+  je .terminator
+
+  inc si
+  inc di
+  jmp .loop
+
+.not_same:
+  popa
+  clc ; clear carry flag
+  ret
+
+.terminator:
+  popa
+  stc ; set carry flag
+  ret;
+
 ; prints the value of DX as hex.
 print_hex:
   pusha
