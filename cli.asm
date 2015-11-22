@@ -21,8 +21,11 @@ os_command_line:
 
   mov di, shutdown_string
   call compare_string
-
   jc do_shutdown
+
+  mov di, ls_string
+  call compare_string
+  jc do_list_files
 
   call print_string ; echo
   ret
@@ -40,8 +43,19 @@ do_shutdown:
     int 0x15
     ret
 
+; Lists all the files
+do_list_files:
+   mov ax, file_name_buffer
+   call disk_file_list
+
+   mov si, disk_file_list
+   call print_string
+   ret
+
 ;input buffer
 buffer times 256 db 0
+file_name_buffer times 1024 db 0
 
 ;COMMANDS
 shutdown_string  db 'shutdown', 0
+ls_string  db 'ls', 0

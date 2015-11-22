@@ -37,7 +37,7 @@ read_input_string:
  ; TODO Backspace at start of line
 
  ; Write whitespace and move cursor back
- pusha ax
+ push ax
  mov ah, 0xe
  mov al, 8 ; move cursor back
  int 0x10

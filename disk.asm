@@ -18,6 +18,13 @@ disk_load:
   jne disk_error  ; diplay error msh
   ret
 
+; Returns a comma separated string of file
+; names on disk in ax.
+disk_file_list:
+  mov word [.file_list_tmp], ax
+  ret
+  .file_list_tmp   dw 0
+
 disk_error:
   mov bx, DISK_ERROR_MSG
   call print_string

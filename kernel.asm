@@ -43,4 +43,5 @@ OS_SETUP_MSG: db 'Loading WeeOS',0
 ; Includes
 ;;;;;;;;;;;;;;;;;;;;;
 %include "print.asm"
+%include "disk.asm"
 %include "cli.asm"
